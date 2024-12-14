@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #121212; /* Dark background */
+            color: #fff; /* White text */
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #202020; /* Darker background for container */
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 1s ease-in-out;
+            color: #1ba098; /* Light blue for heading */
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message {
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        .message.success {
+            color: #008000; /* Light green for success message */
+        }
+
+        .message.error {
+            color: #ff6347; /* Red for error message */
+        }
+
+        .image-container {
+            margin-top: 20px;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #333;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:hover {
+            background-color: #555;
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Registration Result</h1>
+
+    {% if name == "No face detected" %}
+        <div class="message error">
+            <p>No face detected. Please ensure you are in front of the camera and try again.</p>
+        </div>
+    {% elif name == "Unknown" %}
+        <div class="message error">
+            <p>Registration failed. The face could not be matched with the known faces.</p>
+        </div>
+    {% else %}
+        <div class="message success">
+            <p>Registration successful! Welcome, {{ name }}.</p>
+        </div>
+    {% endif %}
+
+    {% if image_file %}
+        <div class="image-container">
+            <h3>Captured Face:</h3>
+            <img src="{{ url_for('static', filename=image_file) }}" alt="Captured Face">
+        </div>
+    {% endif %}
+
+    <div>
+        <a href="/register" class="button">Try Again</a>
+    </div>
+</div>
+
+</body>
+</html>
