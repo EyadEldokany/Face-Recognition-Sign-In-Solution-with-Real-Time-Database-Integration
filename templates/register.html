@@ -5,109 +5,153 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #121212; /* Dark background */
-            color: #fff; /* White text */
-        }
-
-        h1 {
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            animation: fadeIn 1s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
-        }
-
-        input[type="text"] {
-            padding: 10px;
-            font-size: 16px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            width: 200px;
-            background-color: #202020; /* Dark input background */
-            color: #fff; /* White input text */
-        }
-
-        button {
-            background-color: #c50000;
+            background-color: #121212;
             color: #fff;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+            font-family: 'Roboto', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
-
-        button:hover {
-            background-color: #ff1733;
-            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .message, .error {
-            font-size: 18px;
-            margin-top: 20px;
-        }
-
-        .message {
-            color: green;
-        }
-
-        .error {
-            color: red;
-        }
-
         .container {
             background-color: #202020;
             padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.6);
             text-align: center;
+            width: 420px;
         }
+        h1 {
+            font-size: 2em;
+            margin-bottom: 24px;
+            color: #1ba098;
+            animation: fadeIn 0.8s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background-color: #2a2a2a;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+        video, canvas {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: #000;
+        }
+        canvas { display: none; }
+        .btn {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            transition: background 0.25s, transform 0.1s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: #c50000; color: #fff; }
+        .btn-primary:hover { background: #ff1733; }
+        .btn-secondary { background: #333; color: #fff; }
+        .btn-secondary:hover { background: #555; }
+        .message {
+            margin-top: 14px;
+            font-size: 15px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .success { background: #1a3a1a; color: #4caf50; }
+        .error   { background: #3a1a1a; color: #ff6b6b; }
+        .info    { color: #aaa; }
+        a { color: #1ba098; text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Register New User</h1>
+<div class="container">
+    <h1>Register New User</h1>
 
-        <form method="POST">
-            <label for="name">Enter your name:</label>
-            <input type="text" id="name" name="name" required placeholder="Your name">
-            <button type="submit">Register</button>
-        </form>
+    <input type="text" id="nameInput" placeholder="Enter your name" required>
 
-        {% if message %}
-            <div class="message">{{ message }}</div>
-        {% elif error %}
-            <div class="error">{{ error }}</div>
-        {% else %}
-            <div class="message">Please enter your name and click "Register" to proceed with face capture.</div>
-        {% endif %}
-    </div>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+
+    <button class="btn btn-secondary" id="startBtn" onclick="startCamera()">Start Camera</button>
+    <button class="btn btn-primary" id="captureBtn" onclick="capture()" style="display:none">
+        📸 Capture &amp; Register
+    </button>
+
+    <div id="message" class="message info">Enter your name and start the camera to register.</div>
+
+    <br>
+    <a href="/">← Back to Home</a>
+</div>
+
+<script>
+    let stream = null;
+
+    async function startCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('video').srcObject = stream;
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('captureBtn').style.display = 'block';
+            setMessage('Camera ready. Position your face and click Capture.', 'info');
+        } catch (e) {
+            setMessage('Camera access denied. Please allow camera permissions.', 'error');
+        }
+    }
+
+    async function capture() {
+        const name = document.getElementById('nameInput').value.trim();
+        if (!name) {
+            setMessage('Please enter your name first.', 'error');
+            return;
+        }
+
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg', 0.9);
+
+        setMessage('Processing...', 'info');
+        document.getElementById('captureBtn').disabled = true;
+
+        try {
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, image: imageData })
+            });
+            const data = await res.json();
+            setMessage(data.message, data.success ? 'success' : 'error');
+            if (data.success && stream) {
+                stream.getTracks().forEach(t => t.stop());
+            }
+        } catch (e) {
+            setMessage('Network error. Please try again.', 'error');
+        }
+        document.getElementById('captureBtn').disabled = false;
+    }
+
+    function setMessage(text, type) {
+        const el = document.getElementById('message');
+        el.textContent = text;
+        el.className = 'message ' + type;
+    }
+</script>
 </body>
 </html>
