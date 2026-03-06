@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #121212;
+            color: #fff;
+            font-family: 'Roboto', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #202020;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.6);
+            text-align: center;
+            width: 420px;
+        }
+        h1 {
+            font-size: 2em;
+            margin-bottom: 24px;
+            color: #1ba098;
+            animation: fadeIn 0.8s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        video, #resultImg {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: #000;
+        }
+        #resultImg { display: none; }
+        canvas { display: none; }
+        .btn {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            transition: background 0.25s, transform 0.1s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: #333; color: #fff; }
+        .btn-primary:hover { background: #555; }
+        .message {
+            margin-top: 14px;
+            font-size: 15px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .success { background: #1a3a1a; color: #4caf50; }
+        .error   { background: #3a1a1a; color: #ff6b6b; }
+        .info    { color: #aaa; }
+        a { color: #1ba098; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Sign In</h1>
+
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+    <img id="resultImg" alt="Detected face">
+
+    <button class="btn btn-primary" id="startBtn" onclick="startCamera()">Start Camera</button>
+    <button class="btn btn-primary" id="signInBtn" onclick="signIn()" style="display:none">
+        🔍 Recognize Me
+    </button>
+    <button class="btn btn-primary" id="retryBtn" onclick="retry()" style="display:none">
+        Try Again
+    </button>
+
+    <div id="message" class="message info">Click "Start Camera" to begin face sign-in.</div>
+
+    <br>
+    <a href="/">← Back to Home</a>
+</div>
+
+<script>
+    let stream = null;
+
+    async function startCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('video').srcObject = stream;
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('signInBtn').style.display = 'block';
+            setMessage('Camera ready. Look at the camera and click Recognize Me.', 'info');
+        } catch (e) {
+            setMessage('Camera access denied. Please allow camera permissions.', 'error');
+        }
+    }
+
+    async function signIn() {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg', 0.9);
+
+        setMessage('Recognizing...', 'info');
+        document.getElementById('signInBtn').disabled = true;
+
+        try {
+            const res = await fetch('/api/sign-in', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                // Stop camera and show annotated image
+                if (stream) stream.getTracks().forEach(t => t.stop());
+                document.getElementById('video').style.display = 'none';
+                document.getElementById('signInBtn').style.display = 'none';
+                const img = document.getElementById('resultImg');
+                img.src = data.image;
+                img.style.display = 'block';
+                document.getElementById('retryBtn').style.display = 'block';
+                setMessage(data.message, 'success');
+            } else {
+                setMessage(data.message, 'error');
+                document.getElementById('signInBtn').disabled = false;
+            }
+        } catch (e) {
+            setMessage('Network error. Please try again.', 'error');
+            document.getElementById('signInBtn').disabled = false;
+        }
+    }
+
+    function retry() {
+        document.getElementById('resultImg').style.display = 'none';
+        document.getElementById('video').style.display = 'block';
+        document.getElementById('retryBtn').style.display = 'none';
+        document.getElementById('startBtn').style.display = 'block';
+        setMessage('Click "Start Camera" to try again.', 'info');
+    }
+
+    function setMessage(text, type) {
+        const el = document.getElementById('message');
+        el.textContent = text;
+        el.className = 'message ' + type;
+    }
+</script>
+</body>
+</html>
