@@ -21,8 +21,8 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
 # ---------------------------------------------------------------------------
 # Qdrant setup
 # ---------------------------------------------------------------------------
-QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
-QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", None)
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 COLLECTION_NAME = "face_encodings"
 VECTOR_SIZE = 128  # face_recognition always outputs 128-d vectors
 
@@ -201,4 +201,5 @@ def api_sign_in():
 
 
 if __name__ == "__main__":
+
     app.run(debug=True)
